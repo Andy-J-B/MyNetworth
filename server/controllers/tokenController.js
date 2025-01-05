@@ -5,13 +5,18 @@ const User = require("../models/userModel");
 
 // Check if refreshToken still exists
 const getRefreshToken = async (user_id) => {
-  // Check if the username is already in use
-  console.log(user_id);
-  const existingToken = await RefreshToken.findOne({
-    where: { user_id: user_id },
-  });
+  try {
+    // Look for the refresh token associated with the given user_id
+    const existingToken = await RefreshToken.findOne({
+      where: { user_id: user_id },
+    });
 
-  return existingToken;
+    // If token exists, return it; otherwise, return null
+    return existingToken;
+  } catch (error) {
+    console.error("Error retrieving refresh token:", error);
+    throw new Error("Error retrieving refresh token");
+  }
 };
 
 const createRefreshToken = (user_id) => {
@@ -28,39 +33,43 @@ const createRefreshToken = (user_id) => {
 
 const newRefreshToken = async (req, res, next) => {
   const { email } = req.body;
-
-  // Fetch the user from the database based on the email
-  const user = await User.findOne({ where: { email: email } });
-
-  if (!user) {
-    return res
-      .status(401)
-      .json({ message: "User with this email does not exist" });
-  }
-
   try {
-    console.log("Creating new Refresh Token");
-    const user_id = user.user_id;
+    // Fetch the user from the database based on the email
+    const user = await User.findOne({ where: { email: email } });
 
-    existingToken = await getRefreshToken(user_id);
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "User with this email does not exist" });
+    }
+
+    console.log("Creating new Refresh Token");
+
+    const user_id = user.id;
+
+    // Check if a refresh token already exists for this user
+    let existingToken = await getRefreshToken(user_id);
+
     if (!existingToken) {
-      // Token does not exist
-      // Store new Refresh Token in database
-      refreshToken = createRefreshToken(user_id);
+      // No existing refresh token, create and store a new one
+      const refreshToken = createRefreshToken(user_id); // Ensure this generates a secure refresh token
 
       const newRefreshToken = new RefreshToken({
         user_id: user_id,
         token: refreshToken,
       });
-      // Save the new Refresh Token
+
+      // Save the new refresh token to the database
       await newRefreshToken.save();
-    } else if (existingToken) {
-      console.log("Refresh Token Exists");
+      console.log("New refresh token created and saved.");
+    } else {
+      console.log("Refresh token already exists");
     }
+
     next();
   } catch (error) {
-    console.log(error);
-    return res.json({ error: error });
+    console.error("Error in creating new refresh token:", error);
+    return res.status(500).json({ error: "Failed to create refresh token." });
   }
 };
 
@@ -122,17 +131,20 @@ const deleteRefreshToken = async (req, res, next) => {
 };
 
 // Function to generate a new access token using a refresh token
-const generateAccessToken = (user_id) => {
+const generateAccessToken = (user) => {
   try {
     // Generate a new access token using the extracted information
-    const accessToken = jwt.sign({ userId: user_id }, process.env.JWT_SECRET, {
+    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "15m", // Set the expiration time for the access token
     });
 
-    return accessToken;
+    return res.status(200).json({
+      message: "Login successful",
+      accessToken: accessToken, // Send the token to the user
+    });
   } catch (error) {
-    console.log("Error generating access token:", error);
-    return null;
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

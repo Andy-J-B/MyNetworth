@@ -18,7 +18,7 @@ router.post(
   // Login and check user password
   userController.loginUser,
   // Make a new access token
-  tokenController.newAccessToken,
+  tokenController.generateAccessToken,
   // Make a new refresh token
   tokenController.newRefreshToken
 );
