@@ -58,6 +58,8 @@ const loginUser = async (req, res, next) => {
         .json({ message: "User with this email does not exist" });
     }
 
+    req.user = user;
+
     // Compare the entered password with the stored hashed password
     const isPasswordValid = await userAuthentication.comparePasswords(
       password,

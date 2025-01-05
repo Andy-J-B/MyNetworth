@@ -4,12 +4,14 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 
 // Check if refreshToken still exists
-const getRefreshToken = async (email) => {
+const getRefreshToken = async (user) => {
   try {
     // Look for the refresh token associated with the given email
     const existingToken = await RefreshToken.findOne({
-      where: { email: email },
+      where: { user_id: user.id },
     });
+
+    console.log(existingToken);
 
     // If token exists, return it; otherwise, return null
     return existingToken;
@@ -31,12 +33,12 @@ const createRefreshToken = (email) => {
   return refreshToken;
 };
 
-const newRefreshToken = async (req, res, next) => {
+const newRefreshToken = async (req, res) => {
   const { email } = req.body;
+  const accessToken = req.accessToken;
+  const user = req.user;
   try {
-    // Fetch the user from the database based on the email
-    const user = await User.findOne({ where: { email: email } });
-
+    // Check if user exists already done beforehand
     if (!user) {
       return res
         .status(401)
@@ -46,25 +48,39 @@ const newRefreshToken = async (req, res, next) => {
     console.log("Creating new Refresh Token");
 
     // Check if a refresh token already exists for this user
-    let existingToken = await getRefreshToken(email);
+    let existingToken = await getRefreshToken(user);
 
     if (!existingToken) {
       // No existing refresh token, create and store a new one
-      const refreshToken = createRefreshToken(email); // Ensure this generates a secure refresh token
+      existingToken = createRefreshToken(email); // Ensure this generates a secure refresh token
+
+      // Calculate expires_at (30 days from now)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // Add 30 days to the current date
 
       const newRefreshToken = new RefreshToken({
-        email: email,
-        token: refreshToken,
+        user_id: user.id,
+        token: existingToken,
+        expires_at: expiresAt,
       });
 
-      // Save the new refresh token to the database
       await newRefreshToken.save();
-      console.log("New refresh token created and saved.");
+      console.log("New refresh token saved successfully");
     } else {
       console.log("Refresh token already exists");
     }
 
-    next();
+    res.cookie("accessToken", accessToken, {
+      maxAge: 900000, // 15 minutes
+      secure: true, // Set to true if you're using https
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({
+      message: "Refresh token created and access token set in cookie.",
+      accessToken: accessToken, // Optionally return the access token
+    });
   } catch (error) {
     console.error("Error in creating new refresh token:", error);
     return res.status(500).json({ error: "Failed to create refresh token." });
@@ -130,17 +146,17 @@ const deleteRefreshToken = async (req, res, next) => {
 };
 
 // Function to generate a new access token using a refresh token
-const generateAccessToken = (user) => {
+const generateAccessToken = (req, res, next) => {
+  const { email } = req.body;
   try {
     // Generate a new access token using the extracted information
-    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    const accessToken = jwt.sign({ email: email }, process.env.JWT_SECRET, {
       expiresIn: "15m", // Set the expiration time for the access token
     });
 
-    return res.status(200).json({
-      message: "Login successful",
-      accessToken: accessToken, // Send the token to the user
-    });
+    req.accessToken = accessToken;
+
+    next();
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
