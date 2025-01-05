@@ -27,7 +27,12 @@ const authenticateUser = (req, res, next) => {
     req.userId = decoded.userId; // Attach user ID to request
     next(); // Proceed to the next step (controller)
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired access token" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Access token expired" });
+    }
+    return res
+      .status(401)
+      .json({ message: "Invalid or malformed access token" });
   }
 };
 

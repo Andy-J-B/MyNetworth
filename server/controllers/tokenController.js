@@ -75,7 +75,7 @@ const newRefreshToken = async (req, res, next) => {
 
 const deleteRefreshToken = async (req, res, next) => {
   try {
-    const user_id = parseInt(req.body.user_id);
+    const user_id = req.userId;
 
     if (!user_id) {
       return res
@@ -127,6 +127,7 @@ const deleteRefreshToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Error deleting refresh token:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

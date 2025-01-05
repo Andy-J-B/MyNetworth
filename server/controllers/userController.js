@@ -78,12 +78,9 @@ const loginUser = async (req, res, next) => {
 const logoutUser = async (req, res) => {
   try {
     console.log("Starting logoutUser Controller");
-    const user_id = req.body.user_id;
-
-    // Get email and password from req
 
     // Fetch the user from the database based on the email
-    const user = await User.findOne({ where: { user_id: user_id } });
+    const user = await User.findOne({ where: { email: email } });
 
     // Check if user exists
     if (!user) {
@@ -98,11 +95,11 @@ const logoutUser = async (req, res) => {
     res.cookie("accessToken", "", {
       expires: new Date(0),
       httpOnly: true,
-      secure: true, // Set to true if served over HTTPS
+      secure: process.env.NODE_ENV === "production", // Ensure secure if in production
       sameSite: "strict", // Set to 'strict' for added security
     });
 
-    res.status(200).json({ message: "User logged out succesfully" });
+    res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
