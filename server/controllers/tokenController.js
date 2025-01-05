@@ -1,5 +1,5 @@
 // controllers/userController.js
-const RefreshToken = require("../models/refreshTokenModel");
+const RefreshToken = require("../models/tokenModel");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 

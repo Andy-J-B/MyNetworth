@@ -1,7 +1,7 @@
 // controllers/userController.js
 const userAuthentication = require("../middlewares/userMiddleware");
 const User = require("../models/userModel");
-const RefreshToken = require("../models/refreshTokenModel");
+const RefreshToken = require("../models/tokenModel");
 const tokenController = require("./tokenController");
 
 // Check if refreshToken still exists
@@ -15,9 +15,9 @@ const registerUser = async (req, res) => {
 
     // Create a new user
     const newUser = await User.create({
-      username,
-      email,
-      password_hash: hashedPassword,
+      username: username,
+      email: email,
+      password: hashedPassword,
     });
 
     res.status(201).json({
@@ -205,7 +205,6 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
-  getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
