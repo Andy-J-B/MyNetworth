@@ -27,7 +27,7 @@ router.post(
 router.post(
   "/logout",
   // Authenticate user
-  userMiddleware.authenticateUser,
+  tokenController.verifyAccessToken,
   // Delete refresh token
   tokenController.deleteRefreshToken,
   // Logout user (Delete access token)
@@ -37,21 +37,21 @@ router.post(
 // Route to get a user
 router.get(
   "/:user_id",
-  userController.getUserById,
-  tokenController.verifyAccessToken
+  tokenController.verifyAccessToken,
+  userController.getUserById
 );
 
 // Route to update a user's profile
 router.put(
   "/:user_id",
-
-  userController.updateUser,
-  tokenController.verifyAccessToken
+  tokenController.verifyAccessToken,
+  userController.updateUser
 );
 
 // Route to delete a user
 router.delete(
   "/:user_id",
+  tokenController.verifyAccessToken,
   tokenController.deleteRefreshToken,
   userController.deleteUser
 );
