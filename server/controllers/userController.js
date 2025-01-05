@@ -133,14 +133,18 @@ const getUserById = async (req, res, next) => {
 
 const updateUser = async (req, res) => {
   try {
-    // Get user_id
+    // Get email from req.body (or req.user.email if authenticated)
+    const { email, username, password } = req.body;
 
-    const user_id = parseInt(req.params.user_id);
-    const { username, email, password } = req.body;
-    console.log(req.params.user_id);
+    // Check for required fields
+    if (!email || !username || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-    // Find the user by ID
-    const user = await User.findByPk(user_id);
+    console.log(`Updating user with email: ${email}`);
+
+    // Find the user by email
+    const user = await User.findOne({ where: { email: email } });
 
     // If the user doesn't exist, return a 404 Not Found
     if (!user) {
@@ -160,7 +164,10 @@ const updateUser = async (req, res) => {
         where: { user_id: user_id },
       }
     );
-
+    // Check if the user was updated successfully
+    if (affectedRows[0] === 0) {
+      return res.status(400).json({ message: "No changes made" });
+    }
     res.status(200).json({ message: "User has been updated" });
   } catch (error) {
     console.log(error);
