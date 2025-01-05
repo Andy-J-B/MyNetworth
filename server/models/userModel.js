@@ -5,10 +5,11 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database"); // Configure database connection
 
 // User Model
+
 const User = sequelize.define(
-  "users",
+  "User",
   {
-    user_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -22,21 +23,18 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    user_type: {
-      type: DataTypes.STRING,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
-    timestamps: false, // Disable Sequelize's default timestamps (createdAt, updatedAt)
+    tableName: "users",
+    timestamps: true,
   }
 );
 

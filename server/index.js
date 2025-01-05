@@ -10,7 +10,7 @@ require("dotenv").config();
 // ROUTERS //
 
 const userRoute = require("./routes/users");
-const networthRoute = require("./routes/networth");
+const networthRoute = require("./routes/networthRoute");
 
 router.use("/user", userRoute);
 router.use("/networth", networthRoute);

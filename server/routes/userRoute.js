@@ -3,10 +3,10 @@ const express = require("express");
 const router = express.Router();
 
 // Import user-related controllers and middleware ( For authentication)
-const userController = require("../controllers/user");
+const userController = require("../controllers/userController");
 
 // Import token-related controllers and middleware
-const tokenController = require("../controllers/token");
+const tokenController = require("../controllers/tokenController");
 
 // Route to register a new user
 router.post("/register", userController.registerUser);
