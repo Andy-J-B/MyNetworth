@@ -14,23 +14,26 @@ router.post("/register", userController.registerUser);
 // Route to login a user
 router.post(
   "/login",
+  // Login and check user password
   userController.loginUser,
-  tokenController.newRefreshToken,
-  tokenController.verifyAccessToken
+  // Make a new access token
+  tokenController.newAccessToken,
+  // Make a new refresh token
+  tokenController.newRefreshToken
 );
 
 // Route to logout a user
 router.post(
   "/logout",
-
+  // Delete refresh token
   tokenController.deleteRefreshToken,
+  // Logout user (Delete access token)
   userController.logoutUser
 );
 
 // Route to get a user
 router.get(
   "/:user_id",
-
   userController.getUserById,
   tokenController.verifyAccessToken
 );

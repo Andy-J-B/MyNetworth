@@ -67,42 +67,54 @@ const newRefreshToken = async (req, res, next) => {
 const deleteRefreshToken = async (req, res, next) => {
   try {
     const user_id = parseInt(req.body.user_id);
+
     if (!user_id) {
-      res.json({ message: "No user id provided to log out user" });
+      return res
+        .status(400)
+        .json({ message: "No user ID provided to log out user" });
     }
 
     const existingToken = await getRefreshToken(user_id);
 
     if (!existingToken) {
-      // Token does not exist
-      console.log("Token does not exist");
+      // If no refresh token exists for the user, just proceed
+      console.log("No refresh token found for this user.");
+      return res
+        .status(400)
+        .json({ message: "No refresh token found for this user." });
     }
 
+    // Verify the refresh token
     try {
-      // Verify the access token if it is right and not expired
-
-      const decodedToken = jwt.verify(
+      jwt.verify(
         existingToken.dataValues.token,
         process.env.REFRESH_JWT_SECRET
       );
-      console.log("refreshtoken is correct and not expired");
+      console.log("Refresh token is valid and not expired");
     } catch (error) {
-      console.log("Error verifying refreshtoken", error);
-      return res.json({ error: error });
+      console.log("Error verifying refresh token:", error);
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired refresh token" });
     }
 
     // Token exists
     // Delete Refresh Token
 
-    RefreshToken.destroy({ where: { user_id: user_id } }).then(
-      (rowsDeleted) => {
-        if (rowsDeleted > 0) {
-          console.log("Refresh Token deleted successfully.");
-        } else {
-          console.log("No matching record found for the given user_id");
-        }
-      }
-    );
+    // Delete the refresh token from the database to log the user out
+    const rowsDeleted = await RefreshToken.destroy({
+      where: { user_id: user_id },
+    });
+
+    if (rowsDeleted > 0) {
+      console.log("Refresh token deleted successfully.");
+    } else {
+      console.log("No matching refresh token found for this user.");
+      return res
+        .status(404)
+        .json({ message: "No refresh token found to delete" });
+    }
+
     next();
   } catch (error) {
     console.error("Error deleting refresh token:", error);
