@@ -108,18 +108,20 @@ const logoutUser = async (req, res) => {
 
 const getUserById = async (req, res, next) => {
   try {
-    // get the user's id
-    const { user_id } = req.params;
+    // get the email
+    const { email } = req.params;
 
     // find the user in the db
     const user = await User.findOne({
-      where: { user_id: user_id },
-      attributes: ["user_id", "username", "email"],
+      where: { email: email },
+      attributes: ["id", "username", "email"],
     });
 
     // if there is no user, return error
     if (!user) {
-      return res.status(404).json({ message: "There is no user with this id" });
+      return res
+        .status(404)
+        .json({ message: "There is no user with this email" });
     }
 
     next();
@@ -170,11 +172,11 @@ const deleteUser = async (req, res) => {
   try {
     // Get user_id
     console.log("Delete User");
-    const user_id = req.params.user_id;
-    console.log(req.params.user_id);
+    const email = req.params.email;
+    console.log(req.params.email);
 
     // Find the user by ID
-    const user = await User.findByPk(user_id);
+    const user = await User.findByPk(email);
 
     // If the user doesn't exist, return a 404 Not Found
     if (!user) {

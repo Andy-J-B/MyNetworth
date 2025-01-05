@@ -26,6 +26,7 @@ router.post(
 // Route to logout a user
 router.post(
   "/logout",
+  userMiddleware.authenticateUser,
   // Authenticate user
   tokenController.verifyAccessToken,
   // Delete refresh token
@@ -51,6 +52,7 @@ router.put(
 // Route to delete a user
 router.delete(
   "/:user_id",
+  userMiddleware.authenticateUser,
   tokenController.verifyAccessToken,
   tokenController.deleteRefreshToken,
   userController.deleteUser
