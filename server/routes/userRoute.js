@@ -4,6 +4,7 @@ const router = express.Router();
 
 // Import user-related controllers and middleware ( For authentication)
 const userController = require("../controllers/userController");
+const userMiddleware = require("../middlewares/userMiddleware");
 
 // Import token-related controllers and middleware
 const tokenController = require("../controllers/tokenController");
@@ -25,6 +26,8 @@ router.post(
 // Route to logout a user
 router.post(
   "/logout",
+  // Authenticate user
+  userMiddleware.authenticateUser,
   // Delete refresh token
   tokenController.deleteRefreshToken,
   // Logout user (Delete access token)

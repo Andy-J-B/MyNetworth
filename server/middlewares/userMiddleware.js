@@ -15,7 +15,24 @@ const comparePasswords = async (plaintextPassword, hashedPassword) => {
   return bcrypt.compare(plaintextPassword, hashedPassword);
 };
 
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Get token from Authorization header
+
+  if (!token) {
+    return res.status(401).json({ message: "No access token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.userId = decoded.userId; // Attach user ID to request
+    next(); // Proceed to the next step (controller)
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired access token" });
+  }
+};
+
 module.exports = {
   hashPassword,
   comparePasswords,
+  authenticateUser,
 };

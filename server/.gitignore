@@ -131,4 +131,4 @@ dist
 
 # Database structure
 dbStruct/
-config/
+config/database.js

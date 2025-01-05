@@ -1,5 +1,5 @@
 // controllers/userController.js
-const userAuthentication = require("../middlewares/userAuthentication");
+const userAuthentication = require("../middlewares/userMiddleware");
 const User = require("../models/userModel");
 const RefreshToken = require("../models/refreshTokenModel");
 const tokenController = require("./tokenController");
@@ -10,41 +10,37 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if email already exists
-    const checkEmail = async () => {
-      // Check if the username is already in use
-      const existingUser = await User.findOne({ where: { email: email } });
+    // Hash the password before storing it
+    const hashedPassword = await userAuthentication.hashPassword(password);
 
-      return existingUser;
-    };
+    // Create a new user
+    const newUser = await User.create({
+      username,
+      email,
+      password_hash: hashedPassword,
+    });
 
-    existingUser = await checkEmail();
-
-    if (existingUser) {
-      // User with the specified email exists
-      res.status(409).json({ message: "Username already exists" });
-    } else {
-      // Hash the password before storing it
-      const hashedPassword = await userAuthentication.hashPassword(password);
-
-      // Create a new user
-      const newUser = new User({
-        username,
-        email,
-        password: hashedPassword,
-        user_type: "registered",
-      });
-
-      // Save the new User
-      await newUser.save();
-
-      res.json({ user: newUser });
+    res.status(201).json({
+      message: "Registration successful!",
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email, // Avoid sending password or sensitive info
+      },
+    });
+  } catch (error) {
+    // If there is a validation error, Sequelize will throw it
+    if (error.name === "SequelizeValidationError") {
+      return res.status(400).json({ error: "Invalid email format." });
     }
 
-    // res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    // Handle other types of errors (like unique constraint violation)
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({ error: "Email already in use." });
+    }
+
+    console.error("Error registering user:", error);
+    res.status(500).json({ error: "Registration failed." });
   }
 };
 
@@ -109,26 +105,6 @@ const logoutUser = async (req, res) => {
     res.status(200).json({ message: "User logged out succesfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-const getAllUsers = async (req, res, next) => {
-  try {
-    const users = await User.findAll({
-      // Specify fields to search for
-      // So that it doesn't give passwords
-      attributes: ["user_id", "username", "email"],
-    });
-
-    if (!users) {
-      return res.status(404).json({ message: "There are no users" });
-    }
-
-    res.status(200).json({ message: "Got all users", users });
-    next();
-  } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "Server error" });
   }
 };
