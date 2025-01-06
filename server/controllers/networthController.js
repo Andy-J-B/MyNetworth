@@ -34,7 +34,36 @@ const newNetworth = async (req, res) => {
   }
 };
 
-const getAllNetworths = async (req, res) => {};
+const getAllNetworths = async (req, res) => {
+  const user = req.user; // Assuming req.user contains authenticated user info
+
+  try {
+    // Get all networths whose user_id matches the user's id
+    const networths = await Networth.findAll({
+      where: {
+        user_id: user.id,
+      },
+      order: [
+        ["asset_type", "ASC"], // First organize by asset_type
+        ["asset_name", "ASC"], // Then organize by asset_name
+      ],
+    });
+
+    if (networths.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No networths found for the user." });
+    }
+
+    res.status(200).json({
+      message: "Networths retrieved successfully.",
+      data: networths,
+    });
+  } catch (error) {
+    console.error("Error getting all networths:", error);
+    res.status(500).json({ error: "Getting all networths failed." });
+  }
+};
 
 const getNetworthById = async (req, res) => {};
 

@@ -18,10 +18,11 @@ router.post(
   networthController.newNetworth
 );
 
-// Route to get all networths
+// Route to get all networths for user
 router.get(
   "/networths",
   tokenController.verifyAccessToken,
+  networthMiddleware.checkUserExists,
   networthController.getAllNetworths
 );
 
