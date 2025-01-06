@@ -65,7 +65,30 @@ const getAllNetworths = async (req, res) => {
   }
 };
 
-const getNetworthById = async (req, res) => {};
+const getNetworthById = async (req, res) => {
+  console.log("Getting networth by id");
+  const { networth_id } = req.params;
+
+  try {
+    // Get the networth entry matching the asset details
+    const result = await Networth.findOne({ where: { id: networth_id } });
+
+    // Check if the result is null
+    if (!result) {
+      return res.status(404).json({
+        message: "No matching networth entry found.",
+      });
+    }
+
+    res.status(200).json({
+      message: "Networth successfully fetched.",
+      networth: result,
+    });
+  } catch (error) {
+    console.error("Error getting networth:", error);
+    res.status(500).json({ error: "Getting networth failed." });
+  }
+};
 
 const updateNetworth = async (req, res) => {};
 
