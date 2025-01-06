@@ -39,6 +39,7 @@ router.post(
 // Route to get a user
 router.get(
   "/:user_id",
+  userMiddleware.checkUserExists,
   tokenController.verifyAccessToken,
   userController.getUserById
 );
@@ -46,6 +47,7 @@ router.get(
 // Route to update a user's profile
 router.put(
   "/:user_id",
+  userMiddleware.checkUserExists,
   tokenController.verifyAccessToken,
   userController.updateUser
 );
@@ -53,6 +55,7 @@ router.put(
 // Route to delete a user
 router.delete(
   "/:user_id",
+  userMiddleware.checkUserExists,
   tokenController.verifyAccessToken,
   tokenController.deleteRefreshToken,
   userController.deleteUser
