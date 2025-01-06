@@ -31,6 +31,10 @@ const Networth = sequelize.define(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    asset_type: {
+      type: DataTypes.ENUM("asset", "liability"), // Restricts values to 'asset' or 'liability'
+      allowNull: false,
+    },
   },
   {
     tableName: "networth",

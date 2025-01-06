@@ -10,7 +10,13 @@ const networthMiddleware = require("../middlewares/networthMiddleware");
 const tokenController = require("../controllers/tokenController");
 
 // Route to login a networth
-router.post("/newNetworth", networthController.newNetworth);
+router.post(
+  "/newNetworth",
+  networthMiddleware.validateNetworth,
+  tokenController.verifyAccessToken,
+  networthMiddleware.checkUserExists,
+  networthController.newNetworth
+);
 
 // Route to get all networths
 router.get(

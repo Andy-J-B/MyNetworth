@@ -26,7 +26,40 @@ const checkUserExists = async (req, res, next) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const validateNetworth = async (req, res, next) => {
+  try {
+    const { asset_name, asset_type, asset_value } = req.body;
+
+    if (!asset_name || !asset_type || !asset_value) {
+      return res.status(400).json({ message: "Missing data" });
+    }
+
+    // Check if asset_type is a string and is either 'asset' or 'liability'
+    if (typeof asset_type !== "string") {
+      return res.status(400).json({ message: "asset_type must be a string" });
+    }
+    if (asset_type !== "asset" && asset_type !== "liability") {
+      return res
+        .status(400)
+        .json({ message: "asset_type must be either 'asset' or 'liability'" });
+    }
+
+    // Check if asset_value is a positive number
+    if (typeof asset_value !== "number" || asset_value <= 0) {
+      return res
+        .status(400)
+        .json({ message: "asset_value must be a positive number" });
+    }
+
+    // If validation passes, move to the next middleware/controller
+    next();
+  } catch (error) {
+    console.error("Error in validating networth", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 module.exports = {
   checkUserExists,
+  validateNetworth,
 };

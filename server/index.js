@@ -14,10 +14,10 @@ require("dotenv").config();
 // ROUTERS //
 
 const userRoute = require("./routes/userRoute");
-// const networthRoute = require("./routes/networthRoute");
+const networthRoute = require("./routes/networthRoute");
 
 router.use("/user", userRoute);
-// router.use("/networth", networthRoute);
+router.use("/networth", networthRoute);
 
 app.use(express.json());
 app.use(cors());
