@@ -40,7 +40,33 @@ const getNetworthById = async (req, res) => {};
 
 const updateNetworth = async (req, res) => {};
 
-const deleteNetworth = async (req, res) => {};
+const deleteNetworth = async (req, res) => {
+  // Get user_id
+  console.log("Delete networth");
+  const { networth_id } = req.params;
+
+  try {
+    // Destroy the networth entry matching the asset details
+    const result = await Networth.destroy({
+      where: {
+        id: networth_id,
+      },
+    });
+
+    if (result === 0) {
+      return res.status(404).json({
+        message: "No matching networth entry found to delete.",
+      });
+    }
+
+    res.status(200).json({
+      message: "Networth successfully deleted.",
+    });
+  } catch (error) {
+    console.error("Error deleting networth:", error);
+    res.status(500).json({ error: "Deleting networth failed." });
+  }
+};
 
 module.exports = {
   newNetworth,
