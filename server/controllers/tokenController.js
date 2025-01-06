@@ -6,6 +6,7 @@ const User = require("../models/userModel");
 // Check if refreshToken still exists
 const getRefreshToken = async (user) => {
   try {
+    console.log(user.id);
     // Look for the refresh token associated with the given email
     const existingToken = await RefreshToken.findOne({
       where: { user_id: user.id },
@@ -89,15 +90,17 @@ const newRefreshToken = async (req, res) => {
 
 const deleteRefreshToken = async (req, res, next) => {
   try {
+    console.log("Deleting refresh token");
     const email = req.email;
+    const user = req.user;
 
     if (!email) {
       return res
         .status(400)
         .json({ message: "No email provided to log out user" });
     }
-
-    const existingToken = await getRefreshToken(email);
+    console.log("Check if refresh token exists");
+    const existingToken = await getRefreshToken(user);
 
     if (!existingToken) {
       // If no refresh token exists for the user, just proceed
@@ -126,7 +129,7 @@ const deleteRefreshToken = async (req, res, next) => {
 
     // Delete the refresh token from the database to log the user out
     const rowsDeleted = await RefreshToken.destroy({
-      where: { email: email },
+      where: { user_id: user.id },
     });
 
     if (rowsDeleted > 0) {
@@ -163,25 +166,34 @@ const generateAccessToken = (req, res, next) => {
   }
 };
 
-const verifyAccessToken = async (req, res) => {
+const verifyAccessToken = async (req, res, next) => {
   console.log("Verifying the Access Token");
+  const user = req.user;
+  console.log(user);
 
   // First, check if accessToken exists in cookies
-  const accessToken = req.headers.cookie?.split("accessToken=")[1];
+  let accessToken = req.cookies.accessToken;
   if (!accessToken) {
     console.log("No access token provided");
-    return await handleTokenRefresh(req, res);
+    accessToken = await handleTokenRefresh(user);
+
+    // Set the new access token as a cookie
+    res.cookie("accessToken", accessToken, {
+      maxAge: 900000, // 15 minutes
+      secure: true, // Set to true if you're using https
+      httpOnly: true,
+      sameSite: "strict",
+    });
   }
 
   try {
     // Try to verify the existing access token
     const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
     console.log("Access token is correct and not expired");
+    console.log(accessToken, decodedToken.email);
+    req.email = decodedToken.email;
 
-    return res.json({
-      message: "Access token is valid",
-      token: accessToken, // You can return the access token if needed
-    });
+    next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       console.log("Access token has expired");
@@ -194,62 +206,47 @@ const verifyAccessToken = async (req, res) => {
 };
 
 // Handle token refresh if access token doesn't exist or is expired
-const handleTokenRefresh = async (req, res) => {
+const handleTokenRefresh = async (user) => {
   try {
-    const { email } = req.body; // Assuming email is in request body, or from decoded JWT
+    console.log("Refreshing token for user ID:", user.id);
 
-    // Fetch the user by email
-    const user = await User.findOne({ where: { email: email } });
-    if (!user) {
-      return res
-        .status(401)
-        .json({ message: "User with this email does not exist" });
-    }
-
-    // Fetch the refresh token from DB using email
-    const refreshToken = await getRefreshToken(email);
+    // Fetch the refresh token from DB using the user ID
+    const refreshToken = await getRefreshToken(user);
     if (!refreshToken) {
-      return res
-        .status(401)
-        .json({ message: "No refresh token found for this user" });
+      console.log("No refresh token found for this user");
+      throw new Error("No refresh token found. Please log in again.");
     }
 
-    // Verify refresh token and generate new access token
-    jwt.verify(
-      refreshToken.dataValues.token,
-      process.env.REFRESH_JWT_SECRET,
-      (err, decoded) => {
-        if (err) {
-          console.log("Error verifying refresh token", err);
-          return res
-            .status(401)
-            .json({ message: "Invalid or expired refresh token" });
+    // Verify the refresh token
+    try {
+      const decoded = jwt.verify(
+        refreshToken.dataValues.token,
+        process.env.REFRESH_JWT_SECRET
+      );
+      console.log("Refresh token verified:", decoded);
+
+      // Create a new access token
+      const newAccessToken = jwt.sign(
+        { email: decoded.email }, // Use email from decoded payload
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "15m", // Set the expiration time for the access token
         }
+      );
 
-        console.log("Refresh token verified");
-
-        // Create a new access token
-        const newAccessToken = generateAccessToken(email);
-
-        // Send the new access token in cookies
-        res.cookie("accessToken", newAccessToken, {
-          maxAge: 900000, // 15 minutes
-          secure: true, // Set to true if you're using https
-          httpOnly: true,
-          sameSite: "strict",
-        });
-
-        return res.json({
-          message: "Access token refreshed successfully",
-          token: newAccessToken,
-        });
+      console.log("New access token generated successfully");
+      return newAccessToken; // Return the new access token
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        console.log("Refresh token has expired");
+        throw new Error("Refresh token expired. Please log in again.");
       }
-    );
+      console.log("Error verifying refresh token:", err);
+      throw new Error("Invalid refresh token. Please log in again.");
+    }
   } catch (error) {
-    console.log("Error in handleTokenRefresh", error);
-    return res
-      .status(500)
-      .json({ message: "Server error while refreshing token" });
+    console.error("Error in handleTokenRefresh:", error.message);
+    throw error; // Throw the error to the calling function
   }
 };
 

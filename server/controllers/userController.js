@@ -47,18 +47,9 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res, next) => {
   try {
     console.log("Logging in User");
-    const { email, password } = req.body;
+    const user = req.user;
 
-    // Fetch the user from the database based on the email
-    const user = await User.findOne({ where: { email: email } });
-
-    if (!user) {
-      return res
-        .status(401)
-        .json({ message: "User with this email does not exist" });
-    }
-
-    req.user = user;
+    const { password } = req.body;
 
     // Compare the entered password with the stored hashed password
     const isPasswordValid = await userAuthentication.comparePasswords(
@@ -78,18 +69,10 @@ const loginUser = async (req, res, next) => {
 };
 
 const logoutUser = async (req, res) => {
+  const email = req.email;
+
   try {
     console.log("Starting logoutUser Controller");
-
-    // Fetch the user from the database based on the email
-    const user = await User.findOne({ where: { email: email } });
-
-    // Check if user exists
-    if (!user) {
-      return res
-        .status(401)
-        .json({ message: "User with this email does not exist" });
-    }
 
     // Now delete session data and refresh token.
 

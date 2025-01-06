@@ -15,6 +15,7 @@ router.post("/register", userController.registerUser);
 // Route to login a user
 router.post(
   "/login",
+  userMiddleware.checkUserExists,
   // Login and check user password
   userController.loginUser,
   // Make a new access token
@@ -26,7 +27,7 @@ router.post(
 // Route to logout a user
 router.post(
   "/logout",
-  userMiddleware.authenticateUser,
+  userMiddleware.checkUserExists,
   // Authenticate user
   tokenController.verifyAccessToken,
   // Delete refresh token
@@ -52,7 +53,6 @@ router.put(
 // Route to delete a user
 router.delete(
   "/:user_id",
-  userMiddleware.authenticateUser,
   tokenController.verifyAccessToken,
   tokenController.deleteRefreshToken,
   userController.deleteUser

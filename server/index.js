@@ -5,6 +5,8 @@ const express = require("express");
 const app = express();
 const router = express.Router();
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 
 // Load environment variables from .env file
 require("dotenv").config();
