@@ -168,39 +168,54 @@ const generateAccessToken = (req, res, next) => {
 
 const verifyAccessToken = async (req, res, next) => {
   console.log("Verifying the Access Token");
-  const user = req.user;
-  console.log(user);
 
-  // First, check if accessToken exists in cookies
+  // Check if access token exists in cookies
   let accessToken = req.cookies.accessToken;
-  if (!accessToken) {
-    console.log("No access token provided");
-    accessToken = await handleTokenRefresh(user);
 
-    // Set the new access token as a cookie
-    res.cookie("accessToken", accessToken, {
-      maxAge: 900000, // 15 minutes
-      secure: true, // Set to true if you're using https
-      httpOnly: true,
-      sameSite: "strict",
-    });
+  // If there's no access token in the cookies, attempt to refresh it
+  if (!accessToken) {
+    return res.status(401).json({ message: "No access token provided" });
   }
 
+  // At this point, we either have a valid access token or a refreshed one
   try {
-    // Try to verify the existing access token
-    const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
-    console.log("Access token is correct and not expired");
-    console.log(accessToken, decodedToken.email);
-    req.email = decodedToken.email;
+    const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET); // Verify the access token
+    console.log("Access token is correct and not expired", decodedToken);
 
-    next();
+    req.email = decodedToken.email; // Attach the user's email to the request
+
+    next(); // Proceed to the next middleware/controller
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      console.log("Access token has expired");
-      return await handleTokenRefresh(req, res); // Handle token refresh if expired
+      console.log("Access token expired, attempting to refresh...");
+
+      // Attempt to refresh the access token
+      const newAccessToken = await handleTokenRefresh(req, res);
+      if (newAccessToken) {
+        // Set the new access token as a cookie
+        res.cookie("accessToken", newAccessToken, {
+          maxAge: 900000, // 15 minutes
+          secure: true,
+          httpOnly: true,
+          sameSite: "strict",
+        });
+
+        const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET); // Verify the access token
+
+        req.email = decodedToken.email; // Attach the user's email to the request
+
+        // Retry the original request with the new access token
+        next();
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Unable to refresh access token" });
+      }
     } else {
       console.log("Error verifying access token", error);
-      return res.status(401).json({ error: "Invalid or expired access token" });
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired access token" });
     }
   }
 };
