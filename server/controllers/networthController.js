@@ -90,7 +90,39 @@ const getNetworthById = async (req, res) => {
   }
 };
 
-const updateNetworth = async (req, res) => {};
+const updateNetworth = async (req, res) => {
+  const { networth_id } = req.params;
+  const { asset_name, asset_type, asset_value } = req.body;
+
+  try {
+    // Build the update object dynamically
+    const updateData = {};
+    if (asset_name) updateData.asset_name = asset_name;
+    if (asset_type) updateData.asset_type = asset_type;
+    if (asset_value) updateData.asset_value = asset_value;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update." });
+    }
+
+    console.log(asset_name, asset_type, asset_value, updateData);
+
+    // const [updatedRows] = await Networth.update(updateData, {
+    //   where: { id: networth_id },
+    // });
+
+    // if (updatedRows === 0) {
+    //   return res
+    //     .status(404)
+    //     .json({ message: "Networth not found or no changes made." });
+    // }
+
+    res.status(200).json({ message: "Networth updated successfully." });
+  } catch (error) {
+    console.error("Error updating networth:", error);
+    res.status(500).json({ error: "Updating networth failed." });
+  }
+};
 
 const deleteNetworth = async (req, res) => {
   // Get user_id

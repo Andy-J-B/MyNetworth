@@ -36,9 +36,9 @@ router.get(
 );
 
 // Route to update a networth's profile
-router.put(
+// Update only data that have been passed
+router.patch(
   "/:networth_id",
-
   tokenController.verifyAccessToken,
   networthMiddleware.checkUserExists,
   networthController.updateNetworth
@@ -52,5 +52,7 @@ router.delete(
   networthMiddleware.checkUserExists,
   networthController.deleteNetworth
 );
+
+// Delete all networths
 
 module.exports = router;
