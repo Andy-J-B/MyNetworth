@@ -95,27 +95,63 @@ const updateNetworth = async (req, res) => {
   const { asset_name, asset_type, asset_value } = req.body;
 
   try {
+    // Fetch the networth entry by ID to get its current asset_name
+    const existingNetworth = await Networth.findOne({
+      where: { id: networth_id },
+    });
+
+    if (!existingNetworth) {
+      return res.status(404).json({ message: "Networth not found." });
+    }
+
+    const currentAssetName = existingNetworth.asset_name;
+
     // Build the update object dynamically
     const updateData = {};
+
     if (asset_name) updateData.asset_name = asset_name;
     if (asset_type) updateData.asset_type = asset_type;
     if (asset_value) updateData.asset_value = asset_value;
 
+    // If no valid fields to update, return early
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: "No valid fields to update." });
     }
 
+    // If you need to change the value, update value using id
+    if (asset_value) {
+      const [updatedRows] = await Networth.update(
+        { asset_value: asset_value },
+        {
+          where: { id: networth_id },
+        }
+      );
+
+      if (updatedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "Networth not found or no changes made." });
+      }
+    }
+    // Update for `asset_name` and `asset_type`: Change all entries with the same asset_name
+    if (asset_name || asset_type) {
+      const updateForAll = {};
+
+      if (asset_name) updateForAll.asset_name = asset_name;
+      if (asset_type) updateForAll.asset_type = asset_type;
+
+      const [updatedRows] = await Networth.update(updateForAll, {
+        where: { asset_name: currentAssetName },
+      });
+
+      if (updatedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "No matching networth entries found to update." });
+      }
+    }
+
     console.log(asset_name, asset_type, asset_value, updateData);
-
-    // const [updatedRows] = await Networth.update(updateData, {
-    //   where: { id: networth_id },
-    // });
-
-    // if (updatedRows === 0) {
-    //   return res
-    //     .status(404)
-    //     .json({ message: "Networth not found or no changes made." });
-    // }
 
     res.status(200).json({ message: "Networth updated successfully." });
   } catch (error) {
