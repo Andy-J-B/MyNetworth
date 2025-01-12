@@ -1,16 +1,17 @@
 #logo-text {
   font-family: "Potta One", serif;
-  font-weight: 400;
+  font-weight: 500;
   font-style: normal;
-  color: aliceblue;
+  color: rgb(255, 255, 255);
+  font-size: 20px;
 }
 
 #logo-container {
-  height: 46px;
-  width: 116px;
+  height: 45px;
+  width: 140px;
   background-color: black;
   text-align: center;
-  border-radius: 15px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
