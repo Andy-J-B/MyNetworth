@@ -18,7 +18,10 @@ export default function IntroContainer() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div id="intro-container" className="bg-white">
+    <div
+      id="intro-container"
+      className="flex flex-col max-w-screen-xl min-h-screen mb-32"
+    >
       <header className="absolute inset-x-0 top-0 z-50">
         <nav
           aria-label="Global"
@@ -125,16 +128,15 @@ export default function IntroContainer() {
         </Dialog>
       </header>
 
-      <div className=" isolate px-6 pt-14 lg:px-8">
+      <div className="absolute inset-0 -z-20 overflow-hidden">
         <div
           // aria-hidden="true"
-          className="absolute top-0 left-0 right-0 w-screen h-screen -z-20"
+          className="absolute top-0 left-0 right-0 w-full h-full -z-20"
           style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            filter: "blur(2px)",
           }}
         />
 
@@ -147,7 +149,7 @@ export default function IntroContainer() {
             <h1 className="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
               Welcome to MyNetworth!
             </h1>
-            <p className="mt-8 text-pretty text-lg font-medium text-black-500 sm:text-xl/8">
+            <p className="mt-8 text-lg font-medium text-black-500 sm:text-xl/8">
               Track and manage your wealth, all in a single website!
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -160,6 +162,7 @@ export default function IntroContainer() {
               <a href="#" className="text-base/6 font-semibold text-black-900">
                 Learn more <span aria-hidden="true">→</span>
               </a>
+              <button>Hello</button>
             </div>
           </div>
         </div>
